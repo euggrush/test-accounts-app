@@ -1,46 +1,57 @@
 <template>
-    <div class="accounts-form">
-        <h2>Учетные записи</h2>
-        <el-button type="primary" @click="onAddAccount">Добавить учетную запись</el-button>
+    <el-container>
+        <div class="accounts-form">
+            <div class="add-btn-wrap">
+                <h2>Учетные записи</h2>
+                <el-button class="add-account-btn" @click="onAddAccount">+</el-button>
+            </div>
+            <p class="help-wrap"><i class="fa fa-question-circle" style="font-size:30px"></i>
+                Для указания нескольких меток для одной пары логин/пароль используйте разделитель ;</p>
 
-        <div v-for="account in accountsStore.accounts" :key="account.id" class="account-item">
-            <!-- Метка -->
-            <el-form-item label="Метка" :error="labelErrorMap[account.id] ? 'Некорректное значение' : ''">
-                <el-input maxlength="50" v-model="localLabels[account.id]" @blur="() => updateLabel(account)"
-                    placeholder="Введите метки через ;" :class="{ error: labelErrorMap[account.id] }" />
-            </el-form-item>
-
-            <!-- Тип записи -->
-            <el-form-item label="Тип записи">
-                <el-select v-model="account.type" placeholder="Выберите тип" @change="onTypeChange(account)">
-                    <el-option label="LDAP" value="LDAP" />
-                    <el-option label="Локальная" value="Локальная" />
-                </el-select>
-            </el-form-item>
-
-            <!-- Логин -->
-            <el-form-item label="Логин" :error="loginErrorMap[account.id] ? 'Поле обязательно' : ''">
-                <el-input maxlength="100" v-model="account.login" @blur="onLoginBlur($event, account)"
-                    :class="{ error: loginErrorMap[account.id] }" />
-            </el-form-item>
-
-            <!-- Пароль (только если Локальная) -->
-            <template v-if="account.type === 'Локальная'">
-                <el-form-item label="Пароль" :error="passwordErrorMap[account.id] ? 'Поле обязательно' : ''">
-                    <el-input maxlength="100" v-model="account.password" show-password
-                        @blur="onPasswordBlur($event, account)" :class="{ error: passwordErrorMap[account.id] }" />
-                </el-form-item>
-            </template>
-
-            <!-- Кнопка удаления -->
-            <el-button type="danger" @click="onRemoveAccount(account.id)">Удалить</el-button>
+            <el-table :data="accountsStore.accounts" height="500" style="width: 100%">
+                <el-table-column label="Метки" width="150">
+                    <template #default="scope">
+                        <el-input v-model="localLabels[scope.row.id]" @blur="() => updateLabel(scope.row)"
+                            placeholder="Введите метки через ;" maxlength="50"
+                            :class="{ error: labelErrorMap[scope.row.id] }" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="Тип записи" width="120">
+                    <template #default="scope">
+                        <el-select v-model="scope.row.type" placeholder="Выберите тип"
+                            @change="onTypeChange(scope.row)">
+                            <el-option label="LDAP" value="LDAP" />
+                            <el-option label="Локальная" value="Локальная" />
+                        </el-select>
+                    </template>
+                </el-table-column>
+                <el-table-column label="Логин" width="120">
+                    <template #default="scope">
+                        <el-input v-model="scope.row.login" @blur="onLoginBlur($event, scope.row)" maxlength="100"
+                            :class="{ error: loginErrorMap[scope.row.id] }" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="Пароль" width="320">
+                    <template #default="scope">
+                        <el-input v-if="scope.row.type === 'Локальная'" v-model="scope.row.password" show-password
+                            @blur="onPasswordBlur($event, scope.row)" maxlength="100"
+                            :class="{ error: passwordErrorMap[scope.row.id] }" />
+                    </template>
+                </el-table-column>
+                <el-table-column label=" " width="50">
+                    <template #default="scope">
+                        <el-button class="remove-btn" :icon="Delete" @click="onRemoveAccount(scope.row.id)" />
+                    </template>
+                </el-table-column>
+            </el-table>
         </div>
-    </div>
+    </el-container>
 </template>
 
 <script lang="ts" setup>
 import { reactive, onMounted } from 'vue';
 import { useAccountsStore, Account } from '@/stores/accounts';
+import { Delete } from '@element-plus/icons-vue'
 
 // Определение типа для карт ошибок
 interface ErrorMap {
@@ -145,18 +156,71 @@ function onPasswordBlur(event: Event, account: Account) {
 </script>
 
 <style scoped>
-.el-button--primary {
-    margin-bottom: 16px;
+/* CSS-переменные для основных значений */
+:root {
+    --border-color: #ccc;
+    --border-radius: 8px;
+    --padding: 16px;
+    --margin-bottom: 16px;
 }
 
+/* Общий контейнер с flex-раскладкой */
+.flex-container {
+    display: flex;
+    align-items: center;
+}
+
+/* Обёртка для кнопки добавления */
+.add-btn-wrap {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 1px;
+}
+
+/* Стили для элемента аккаунта */
 .account-item {
-    border: 1px solid #ccc;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    border: 1px solid var(--border-color);
+    padding: var(--padding);
+    margin-bottom: var(--margin-bottom);
+    border-radius: var(--border-radius);
 }
 
+/* Сброс отступов для элементов формы */
+.el-form-item {
+    display: block;
+    margin: 0;
+}
+
+/* Стилизация ошибки */
 .error {
     border-color: red !important;
+}
+
+/* Обёртка для подсказок */
+.help-wrap {
+    display: flex;
+    align-items: center;
+}
+
+.help-wrap i {
+    margin-right: 10px;
+}
+
+/* Кнопки */
+.add-account-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    margin-left: 10px;
+}
+
+.remove-btn {
+    border: none;
+    font-size: 20px;
 }
 </style>
