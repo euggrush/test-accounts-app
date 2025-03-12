@@ -11,8 +11,8 @@
             <el-table :data="accountsStore.accounts" height="500" style="width: 100%">
                 <el-table-column label="Метки" width="150">
                     <template #default="scope">
-                        <el-input v-model="localLabels[scope.row.id]" @blur="() => updateLabel(scope.row)"
-                            placeholder="Введите метки через ;" maxlength="50"
+                        <el-input v-model="localLabels[scope.row.id]" @input="onLabelInput(scope.row)"
+                            @blur="() => updateLabel(scope.row)" placeholder="Введите метки через ;" maxlength="50"
                             :class="{ error: labelErrorMap[scope.row.id] }" />
                     </template>
                 </el-table-column>
@@ -110,6 +110,19 @@ function updateLabel(account: Account) {
         accountsStore.updateAccount({ ...account });
         // Обновляем локальное значение, чтобы отобразить преобразованный результат
         localLabels[account.id] = account.labels.map(label => label.text).join(';');
+    }
+}
+
+/**
+ * Функция обработки ввода меток
+ * Оставляет только буквы (латинские и кириллические) и символ ';'
+ */
+function onLabelInput(account: Account) {
+    const value = localLabels[account.id];
+    // Разрешаем только буквы (латинские и кириллические) и символ ';'
+    const filtered = value.replace(/[^a-zA-Zа-яА-ЯёЁ;]+/g, '');
+    if (filtered !== value) {
+        localLabels[account.id] = filtered;
     }
 }
 
